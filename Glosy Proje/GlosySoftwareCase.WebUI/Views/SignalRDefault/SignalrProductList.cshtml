@@ -1,0 +1,60 @@
+﻿@model List<ResultProductDto>
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_UILayout.cshtml";
+}
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/microsoft/signalr/dist/browser/signalr.min.js"></script>
+
+
+
+<div class="content">
+    <div class="container-fluid">
+
+        <script type="text/javascript">
+
+            $(document).ready(() => {
+
+                var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:7171/SignalRHub").build();
+                $("#connstatus").text(connection.state);
+                connection.start().then(() => {
+                    $("#connstatus").text(connection.state);
+                    setInterval(() => {
+                        connection.invoke("GetProductTable");
+                    }, 2000);
+                }).catch((err) => { console.log(err) });
+
+
+                connection.on("ReceiveProductList", (value) => {
+                    console.log(value);
+                    let tablehtml = `<table class=table mt-3><thead>
+                                                                                     <tr>
+                                                                                     <th scope="col">#</th>
+                                                                                     <th scope="col">Ürün Adı</th>
+                                                                                     <th scope="col">Ürün Fiyatı</th>
+                                                                                     <th scope="col">Ürün Miktarı</th>
+                                                                                     <th scope="col">Ürün Detayı</th>
+                                                                                     </tr>
+                                                                                     </thead>
+                                                                                     <tbody>`
+                    $.each(value, (index, item) => {
+                        tablehtml += `<tr>
+                                                                                    <th>${index + 1}</th>
+                                                                                    <td>${item.productName}</td>
+                                                                                    <td>${item.productPrice}</td>
+                                                                                    <td>${item.productAmount}</td>
+                                                                                    <td>${item.productDetail}</td>
+                                                                                    </tr>`
+                    });
+                    tablehtml += "</tbody></table>";
+                    $("#productList").html(tablehtml);
+                });
+            });
+        </script>
+
+        <div id="productList"></div>
+
+    </div>
+</div>
+
